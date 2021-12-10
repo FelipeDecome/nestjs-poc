@@ -1,10 +1,7 @@
-import { Prisma, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 
-export class CreateUserDto implements Prisma.UserCreateInput {
-  id?: string;
+export class CreateUserDto {
   email: string;
   name: string;
   role?: Role;
-  createdAt?: Date;
-  updatedAt?: Date;
 }

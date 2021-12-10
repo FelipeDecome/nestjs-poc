@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 
-import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
+
+import { UsersService } from './users.service';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { JWTService } from 'src/shared/services/jwt.service';
+
+import { UsersRepository } from './repositories/prisma/UsersRepository';
 
 @Module({
   controllers: [UsersController],
@@ -15,8 +18,17 @@ import { JWTService } from 'src/shared/services/jwt.service';
         log: ['query', 'info', 'warn', 'error'],
       }),
     },
+    {
+      provide: 'IUsersRepository',
+      useClass: UsersRepository,
+    },
     JWTService,
   ],
-  exports: [UsersService],
+  exports: [
+    {
+      provide: 'IUsersRepository',
+      useClass: UsersRepository,
+    },
+  ],
 })
 export class UsersModule {}

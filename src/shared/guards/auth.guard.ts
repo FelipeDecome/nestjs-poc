@@ -3,16 +3,19 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { UsersService } from 'src/modules/users/users.service';
+
 import { JWTService } from '../services/jwt.service';
+import { IUsersRepository } from 'src/modules/users/repositories/ports/IUsersRepository';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JWTService,
-    private usersService: UsersService,
+    @Inject('IUsersRepository')
+    private usersRepository: IUsersRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -27,7 +30,7 @@ export class AuthGuard implements CanActivate {
     try {
       const { sub } = this.jwtService.verify(token);
 
-      const user = await this.usersService.findOne(sub);
+      const user = await this.usersRepository.findById(sub);
 
       if (!user)
         throw new UnauthorizedException('User assigned to this JWT not found');

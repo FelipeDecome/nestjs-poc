@@ -1,53 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
-import { PrismaService } from 'src/shared/services/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+import { IUsersRepository } from './repositories/ports/IUsersRepository';
+
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @Inject('IUsersRepository')
+    private usersRepository: IUsersRepository,
+  ) {}
 
-  create(data: CreateUserDto) {
-    return this.prisma.user.create({
-      data,
-    });
+  async create(createUserDto: CreateUserDto) {
+    const { email } = createUserDto;
+
+    const emailInUse = await this.usersRepository.findByEmail(email);
+
+    if (emailInUse) throw new BadRequestException('Email already in use');
+
+    return this.usersRepository.create(createUserDto);
   }
 
-  findAll() {
-    return this.prisma.user.findMany();
+  async index() {
+    return this.usersRepository.index();
   }
 
-  findOne(id: string) {
-    return this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-    });
+  async findById(id: string) {
+    return this.usersRepository.findById(id);
   }
 
-  findByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const { role } = updateUserDto;
+
+    if (role && !['ADMIN', 'USER'].includes(role))
+      throw new BadRequestException(`Role '${role}' does not exist`);
+
+    return this.usersRepository.update(id, updateUserDto);
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
-    return this.prisma.user.update({
-      where: {
-        id,
-      },
-      data: updateUserDto,
-    });
-  }
+  async remove(id: string) {
+    const findUser = await this.usersRepository.findById(id);
 
-  remove(id: string) {
-    return this.prisma.user.delete({
-      where: {
-        id,
-      },
-    });
+    if (!findUser) throw new BadRequestException('User not found');
+
+    return this.usersRepository.delete(id);
   }
 }

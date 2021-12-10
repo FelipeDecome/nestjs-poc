@@ -3,14 +3,15 @@ import {
   Controller,
   HttpException,
   HttpStatus,
+  Inject,
   Post,
 } from '@nestjs/common';
 
 import { User } from '.prisma/client';
 
 import { AuthenticateUser } from './dto/authenticate-user.dto';
-import { UsersService } from '../users/users.service';
 import { JWTService } from 'src/shared/services/jwt.service';
+import { IUsersRepository } from '../users/repositories/ports/IUsersRepository';
 
 interface IAuthenticateResponde {
   token: string;
@@ -20,7 +21,8 @@ interface IAuthenticateResponde {
 @Controller('sessions')
 export class SessionsController {
   constructor(
-    private readonly usersService: UsersService,
+    @Inject('IUsersRepository')
+    private readonly usersRepository: IUsersRepository,
     private readonly jwtService: JWTService,
   ) {}
 
@@ -28,7 +30,7 @@ export class SessionsController {
   async authenticate(
     @Body() { email }: AuthenticateUser,
   ): Promise<IAuthenticateResponde> {
-    const findUser = await this.usersService.findByEmail(email);
+    const findUser = await this.usersRepository.findByEmail(email);
 
     if (!findUser)
       throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
