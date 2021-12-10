@@ -1,3 +1,3 @@
-export class AuthenticateUser {
+export class AuthenticateUserDto {
   email: string;
 }

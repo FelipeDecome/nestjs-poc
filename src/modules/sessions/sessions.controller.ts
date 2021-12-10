@@ -1,45 +1,19 @@
-import {
-  Body,
-  Controller,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Post, UsePipes } from '@nestjs/common';
 
-import { User } from '.prisma/client';
+import { AuthenticateUserDto } from './dto/authenticate-user.dto';
+import { AuthenticateValidation } from './validations/authenticate-validation';
 
-import { AuthenticateUser } from './dto/authenticate-user.dto';
-import { JWTService } from 'src/shared/services/jwt.service';
-import { IUsersRepository } from '../users/repositories/ports/IUsersRepository';
-
-interface IAuthenticateResponde {
-  token: string;
-  user: User;
-}
+import { IAuthenticateResponse, SessionsService } from './sessions.service';
 
 @Controller('sessions')
 export class SessionsController {
-  constructor(
-    @Inject('IUsersRepository')
-    private readonly usersRepository: IUsersRepository,
-    private readonly jwtService: JWTService,
-  ) {}
+  constructor(private readonly sessionsService: SessionsService) {}
 
   @Post()
+  @UsePipes(AuthenticateValidation)
   async authenticate(
-    @Body() { email }: AuthenticateUser,
-  ): Promise<IAuthenticateResponde> {
-    const findUser = await this.usersRepository.findByEmail(email);
-
-    if (!findUser)
-      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
-
-    const token = this.jwtService.sign(findUser.id);
-
-    return {
-      token,
-      user: findUser,
-    };
+    @Body() { email }: AuthenticateUserDto,
+  ): Promise<IAuthenticateResponse> {
+    return this.sessionsService.authenticate(email);
   }
 }
