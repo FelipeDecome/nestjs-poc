@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { User } from '@prisma/client';
 
 import { JWTService } from 'src/shared/services/jwt.service';
@@ -20,8 +20,7 @@ export class SessionsService {
   async authenticate(email: string): Promise<IAuthenticateResponse> {
     const findUser = await this.usersRepository.findByEmail(email);
 
-    if (!findUser)
-      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    if (!findUser) throw new UnauthorizedException('User not found');
 
     const token = this.jwtService.sign(findUser.id);
 
